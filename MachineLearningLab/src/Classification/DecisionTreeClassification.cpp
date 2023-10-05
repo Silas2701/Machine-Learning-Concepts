@@ -37,7 +37,11 @@ void DecisionTreeClassification::fit(std::vector<std::vector<double>>& X, std::v
 std::vector<double> DecisionTreeClassification::predict(std::vector<std::vector<double>>& X) {
 	std::vector<double> predictions;
 	
-	//traverseTree()
+	for (int sampleIdx = 0; sampleIdx < X.size(); ++sampleIdx) {
+		double prediction = traverseTree(X[sampleIdx], root);
+
+		predictions.push_back(prediction);
+	}
 	
 	return predictions;
 }
@@ -54,15 +58,23 @@ Node* DecisionTreeClassification::growTree(std::vector<std::vector<double>>& X, 
     int split_idx = -1; 
     double split_thresh = 0.0;
 
-	if (num_samples == 1) {
-		return new Node(-1, split_thresh, nullptr, nullptr, y[0]);
+	std::vector<std::vector<double>> X_columns;
+
+	for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
+		std::vector<double> X_column;
+
+		for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
+			X_column.push_back(X[sample_idx][feature_idx]);
+		}
+
+		X_columns.push_back(X_column);
 	}
 
 	for (int feature_idx = 0; feature_idx < num_features; feature_idx++) {
 		for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
 			double candidate_threshold = X[sample_idx][feature_idx];
 
-			double information_gain = informationGain(y, X[feature_idx], candidate_threshold);
+			double information_gain = informationGain(y, X_columns[feature_idx], candidate_threshold);
 
 			// Check if this is the best split so far
 			if (information_gain > best_gain) {
@@ -73,8 +85,6 @@ Node* DecisionTreeClassification::growTree(std::vector<std::vector<double>>& X, 
 		}
 	}
 
-	X.erase(X.begin() + split_idx);
-
 	// Split the data into left and right based on the best split
 	std::vector<std::vector<double>> X_left;
 	std::vector<std::vector<double>> X_right;
@@ -83,18 +93,42 @@ Node* DecisionTreeClassification::growTree(std::vector<std::vector<double>>& X, 
 	std::vector<double> y_right;
 
 	for (int i = 0; i < num_samples; i++) {
-		if (X[i][split_idx] <= split_thresh) {
-			X_left.push_back(X[i]);
-			y_left.push_back(y[i]);
-		}
-		else {
-			X_right.push_back(X[i]);
-			y_right.push_back(y[i]);
+		std::vector<double> sample = X[i];
+		double label = y[i];
+
+		double split_value = X[i][split_idx];
+		/*sample.erase(sample.begin() + split_idx);*/
+
+		if (split_value <= split_thresh) {
+			X_left.push_back(sample);
+			y_left.push_back(label);
+		} else {
+			X_right.push_back(sample);
+			y_right.push_back(label);
 		}
 	}
+
+	// check if left or right side only consists of one label
+	bool allEqualLeft = std::all_of(y_left.begin(), y_left.end(), [&](double i) {return i == y_left[0]; });
+	bool allEqualRight = std::all_of(y_right.begin(), y_right.end(), [&](double i) {return i == y_right[0]; });
+
+
+	Node* left;
+	Node* right;
+
+	if (allEqualLeft) {
+		left = new Node(0, 0.0, nullptr, nullptr, y_left[0]);
+	} else {
+		left = growTree(X_left, y_left, depth + 1);
+	}
+
+	if (allEqualRight) {
+		right = new Node(0, 0.0, nullptr, nullptr, y_right[0]);
+	} else {
+		right = growTree(X_right, y_right, depth + 1);
+	}
+
 	// Recursively grow the left and right subtrees
-	Node* left = growTree(X_left, y_left, depth + 1);
-	Node* right = growTree(X_right, y_right, depth + 1);
 
 	return new Node(split_idx, split_thresh, left, right); // return a new node with the split index, split threshold, left tree, and right tree
 }
@@ -124,12 +158,13 @@ double DecisionTreeClassification::informationGain(std::vector<double>& y, std::
 	}
 
 	// Calculate the weighted average of child entropies
-	double left_child_entropy = EntropyFunctions::entropy(X_column, left_idxs);
-	double right_child_entropy = EntropyFunctions::entropy(X_column, right_idxs);
+	double left_child_entropy = EntropyFunctions::entropy(y, left_idxs);
+	double right_child_entropy = EntropyFunctions::entropy(y, right_idxs);
 
 	// Calculate information gain as the difference between parent entropy and weighted child entropies
-	double ig = parent_entropy - ((static_cast<double>(left_child_count) / y.size()) * left_child_entropy
-		+ (static_cast<double>(right_child_count) / y.size()) * right_child_entropy);
+	double entropy = static_cast<double>(left_child_count) / y.size() * left_child_entropy 
+		+ static_cast<double>(right_child_count) / y.size() * right_child_entropy;
+	double ig = parent_entropy - entropy;
 
 	return ig;
 }
