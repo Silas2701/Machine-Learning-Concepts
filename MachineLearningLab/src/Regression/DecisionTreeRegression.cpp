@@ -69,9 +69,48 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 double DecisionTreeRegression::meanSquaredError(std::vector<double>& y, std::vector<double>& X_column, double split_thresh) {
 
 	double mse = 0.0;
-	
-	// Calculate the mse
-	// TODO
+
+	std::vector<double> y_left;
+	std::vector<double> y_right;
+
+	for (int i = 0; i < X_column.size(); ++i) {
+		double label = y[i];
+
+		if (X_column[i] <= split_thresh) {
+			y_left.push_back(label);
+		}
+		else {
+			y_right.push_back(label);
+		}
+	}
+
+	double meanLeft = mean(y_left);
+	double countLeft = static_cast<double>(y_left.size());
+	double squaredLeft = 0.0;
+
+	for (const int y : y_left) {
+		squaredLeft += std::pow(y - meanLeft, 2);
+	}
+
+	double mseLeft = 0.0;
+
+	if (countLeft != 0)
+		mseLeft = squaredLeft / countLeft;
+
+	double meanRight = mean(y_right);
+	double countRight = static_cast<double>(y_right.size());
+	double squaredRight = 0.0;
+
+	for (const int y : y_right) {
+		squaredRight += std::pow(y - meanRight, 2);
+	}
+
+	double mseRight = 0.0;
+
+	if (countRight != 0)
+		mseRight = squaredRight / countRight;
+
+	mse = mseLeft + mseRight;
 	
 	return mse;
 }
@@ -80,9 +119,13 @@ double DecisionTreeRegression::meanSquaredError(std::vector<double>& y, std::vec
 double DecisionTreeRegression::mean(std::vector<double>& values) {
 
 	double meanValue = 0.0;
-	
-	// calculate the mean
-	// TODO
+
+	double totalValue = 0.0;
+	for (const int value : values) {
+		totalValue += value;
+	}
+
+	meanValue = totalValue / static_cast<double>(values.size());
 	
 	return meanValue;
 }
