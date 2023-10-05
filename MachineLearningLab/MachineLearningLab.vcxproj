@@ -94,7 +94,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\silas\Downloads\ML_Lab_Project\ML Lab\AdditionalLibraries\eigen-3.4.0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\elo23003\Downloads\ML_Lab_Project\ML Lab\AdditionalLibraries\eigen-3.4.0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies />

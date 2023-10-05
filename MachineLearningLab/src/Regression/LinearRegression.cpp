@@ -24,10 +24,12 @@
 #include <Eigen/Eigenvalues>
 using namespace System::Windows::Forms; // For MessageBox
 
-
+Eigen::VectorXd coefficients;
 
 										///  LinearRegression class implementation  ///
 
+
+// ------ MATRIX COMPUTATION ------
 
 // Function to fit the linear regression model to the training data //
 void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels) {
@@ -43,7 +45,78 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
 	*/
 	
 	// TODO
+      // Check if the sizes of trainData and trainLabels match
+ 
+    if (trainData.size() != trainLabels.size()) {
+        std::cerr << "Error: Size mismatch between trainData and trainLabels." << std::endl;
+        return;
+    }
+
+    // Convert trainData to matrix representation
+    Eigen::MatrixXd X(trainData.size(), trainData[0].size());
+    for (int i = 0; i < trainData.size(); ++i) {
+        for (int j = 0; j < trainData[0].size(); ++j) {
+            X(i, j) = trainData[i][j];
+        }
+    }
+
+    // Construct the design matrix X (with an additional column of ones for the intercept)
+    Eigen::MatrixXd X_with_intercept(trainData.size(), trainData[0].size() + 1);
+    X_with_intercept << Eigen::MatrixXd::Ones(trainData.size(), 1), X;
+
+    // Convert trainLabels to matrix representation
+    Eigen::VectorXd y(trainLabels.size());
+    for (int i = 0; i < trainLabels.size(); ++i) {
+        y(i) = trainLabels[i];
+    }
+
+    // Calculate the coefficients using the least squares method
+     // Store the coefficients for future predictions
+    coefficients = (X_with_intercept.transpose() * X_with_intercept).ldlt().solve(X_with_intercept.transpose() * y);
+
 }
+
+// ------ GRADIENT DESCENT ------
+
+// Function to fit the linear regression model to the training data using Gradient Descent
+void fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learningRate, int num_epochs) {
+    // Check if the sizes of trainData and trainLabels match
+    if (trainData.size() != trainLabels.size()) {
+        std::cerr << "Error: Size mismatch between trainData and trainLabels." << std::endl;
+        return;
+    }
+
+    // Convert trainData to matrix representation
+    Eigen::MatrixXd X(trainData.size(), trainData[0].size());
+    for (int i = 0; i < trainData.size(); ++i) {
+        for (int j = 0; j < trainData[0].size(); ++j) {
+            X(i, j) = trainData[i][j];
+        }
+    }
+
+    // Convert trainLabels to matrix representation
+    Eigen::VectorXd y(trainLabels.size());
+    for (int i = 0; i < trainLabels.size(); ++i) {
+        y(i) = trainLabels[i];
+    }
+
+    // Initialize coefficients to zeros
+    coefficients = Eigen::VectorXd::Zero(trainData[0].size() + 1);
+
+    // Gradient Descent
+    for (int iter = 0; iter < num_epochs; ++iter) {
+        // Compute predictions
+       // Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + coefficients(0);
+
+        // Compute the error (cost) and its gradient
+        Eigen::VectorXd error = predictions - y;
+        Eigen::VectorXd gradient = X.transpose() * error;
+
+        // Update coefficients using the gradient and learning rate
+        coefficients -= learningRate * gradient;
+    }
+}
+
 
 
 // Function to make predictions on new data //
@@ -61,8 +134,46 @@ std::vector<double> LinearRegression::predict(const std::vector<std::vector<doub
 	// TODO
 
 	std::vector<double> result;
+
+
+   
+    // Check if the model has been fitted
+    if (coefficients.size() == 0) {
+        std::cerr << "Error: Model has not been fitted. Please call the 'fit' function first." << std::endl;
+        return result;
+    }
+
+    // Convert testData to matrix representation
+    Eigen::MatrixXd X(testData.size(), testData[0].size());
+    for (int i = 0; i < testData.size(); ++i) {
+        for (int j = 0; j < testData[0].size(); ++j) {
+            X(i, j) = testData[i][j];
+        }
+    }
+
+    // Construct the design matrix X (with an additional column of ones for the intercept)
+    Eigen::MatrixXd X_with_intercept(testData.size(), testData[0].size() + 1);
+    X_with_intercept << Eigen::MatrixXd::Ones(testData.size(), 1), X;
 	
+
+    // Make predictions using the stored coefficients
+    Eigen::VectorXd predictions = X_with_intercept * coefficients;
+
+
+    // Convert predictions to a vector
+    for (int i = 0; i < predictions.size(); ++i) {
+        result.push_back(predictions(i));
+    }
+    
+
+
+
     return result;
+
+
+
+    
+
 }
 
 
@@ -126,8 +237,9 @@ std::tuple<double, double, double, double, double, double,
 
         DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
-        // Fit the model to the training data
+        // Fit the model to the training data 
         fit(trainData, trainLabels);
+
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);
