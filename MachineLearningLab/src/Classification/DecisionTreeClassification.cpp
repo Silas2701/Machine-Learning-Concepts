@@ -28,7 +28,19 @@ DecisionTreeClassification::DecisionTreeClassification(int min_samples_split, in
 
 // Fit is a function to fits a decision tree to the given data.//
 void DecisionTreeClassification::fit(std::vector<std::vector<double>>& X, std::vector<double>& y) {
-	n_feats = (n_feats == 0) ? X[0].size() : min(n_feats, static_cast<int>(X[0].size()));
+	n_feats = (n_feats == 0) ? X[0].size() : min(n_feats, static_cast<int>(X[0].size()) - 1);
+
+	int number_total_features = static_cast<int>(X[0].size());
+	int features_to_remove = number_total_features - n_feats;
+
+	for (int i = 0; i < features_to_remove; ++i) {
+		int random = rand() % static_cast<int>(X[0].size());
+
+		for (int feature_idx = 0; feature_idx < X.size(); ++feature_idx) {
+			X[feature_idx].erase(X[feature_idx].begin() + random);
+		}
+	}
+
 	root = growTree(X, y);
 }
 
@@ -97,7 +109,9 @@ Node* DecisionTreeClassification::growTree(std::vector<std::vector<double>>& X, 
 		double label = y[i];
 
 		double split_value = X[i][split_idx];
-		/*sample.erase(sample.begin() + split_idx);*/
+		
+		// Ignore values that are negative for example after removing them from the matrix
+		sample[split_idx] = -1.0;
 
 		if (split_value <= split_thresh) {
 			X_left.push_back(sample);
@@ -106,6 +120,13 @@ Node* DecisionTreeClassification::growTree(std::vector<std::vector<double>>& X, 
 			X_right.push_back(sample);
 			y_right.push_back(label);
 		}
+	}
+
+	// csdfsf
+	bool isLeftOrRightEmpty = y_left.size() == 0 || y_right.size() == 0;
+
+	if (isLeftOrRightEmpty) {
+		return new Node(0, 0.0, nullptr, nullptr, mostCommonlLabel(y));
 	}
 
 	// check if left or right side only consists of one label
@@ -118,12 +139,16 @@ Node* DecisionTreeClassification::growTree(std::vector<std::vector<double>>& X, 
 
 	if (allEqualLeft) {
 		left = new Node(0, 0.0, nullptr, nullptr, y_left[0]);
+	} else if (depth == max_depth - 1 || y_left.size() < min_samples_split) {
+		left = new Node(0, 0.0, nullptr, nullptr, mostCommonlLabel(y_left));
 	} else {
 		left = growTree(X_left, y_left, depth + 1);
 	}
 
 	if (allEqualRight) {
 		right = new Node(0, 0.0, nullptr, nullptr, y_right[0]);
+	} else if (depth == max_depth - 1 || y_right.size() < min_samples_split) {
+		right = new Node(0, 0.0, nullptr, nullptr, mostCommonlLabel(y_right));
 	} else {
 		right = growTree(X_right, y_right, depth + 1);
 	}
@@ -193,7 +218,7 @@ double DecisionTreeClassification::mostCommonlLabel(std::vector<double>& y) {
 		}
 	);
 
-	most_common = max_pair->second;
+	most_common = max_pair->first;
 
 	return most_common;
 }
