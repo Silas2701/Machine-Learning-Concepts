@@ -28,6 +28,16 @@ DecisionTreeRegression::DecisionTreeRegression(int min_samples_split, int max_de
 // fit function:Fits a decision tree regression model to the given data.//
 void DecisionTreeRegression::fit(std::vector<std::vector<double>>& X, std::vector<double>& y) {
 	n_feats = (n_feats == 0) ? X[0].size() : min(n_feats, static_cast<int>(X[0].size()));
+
+	std::random_shuffle(X.begin(), X.end());
+	int numberOfFeaturesToRemove = X[0].size() - n_feats;
+
+	for (int i = 0; i < X[0].size(); ++i) {
+		for (int j = 0; j < numberOfFeaturesToRemove; ++j) {
+			X[i].pop_back();
+		}
+	}
+
 	root = growTree(X, y);
 }
 
@@ -38,29 +48,111 @@ std::vector<double> DecisionTreeRegression::predict(std::vector<std::vector<doub
 	std::vector<double> predictions;
 	
 	// Implement the function
-	// TODO
+	
+	for (std::vector<double>& x : X) {
+		double prediction = traverseTree(x, root);
+
+		predictions.push_back(prediction);
+	}
+
 	return predictions;
 }
 
 
 // growTree function: Grows a decision tree regression model using the given data and parameters //
 Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std::vector<double>& y, int depth) {
-
-
+	int num_samples = X.size();
+	int num_features = X[0].size();
+	double best_gain = std::numeric_limits<double>::infinity();
 	int split_idx = -1;
 	double split_thresh = 0.0;
 
-	/* Implement the following:
-		--- define stopping criteria
-    	--- Loop through candidate features and potential split thresholds.
-		--- Find the best split threshold for the current feature.
-		--- grow the children that result from the split
-	*/
-	
-	// TODO
+	std::vector<std::vector<double>> X_columns;
+
+	for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
+		std::vector<double> X_column;
+
+		for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
+			X_column.push_back(X[sample_idx][feature_idx]);
+		}
+
+		X_columns.push_back(X_column);
+	}
+
+	for (int feature_idx = 0; feature_idx < num_features; feature_idx++) {
+		for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
+			double candidate_threshold = X[sample_idx][feature_idx];
+
+			double mean_squared_error = meanSquaredError(y, X_columns[feature_idx], candidate_threshold);
+
+			// Check if this is the best split so far
+			if (mean_squared_error < best_gain) {
+				best_gain = mean_squared_error;
+				split_idx = feature_idx;
+				split_thresh = candidate_threshold;
+			}
+		}
+	}
+
+	double error = meanSquaredError(y, X_columns[split_idx], split_thresh);
+	double errorThreshold = 10;
+
+	if (error < errorThreshold) {
+		return new Node(0, 0.0, nullptr, nullptr, mean(y));
+	}
+
+	// Split the data into left and right based on the best split
+	std::vector<std::vector<double>> X_left;
+	std::vector<std::vector<double>> X_right;
+
+	std::vector<double> y_left;
+	std::vector<double> y_right;
+
+	for (int i = 0; i < num_samples; i++) {
+		std::vector<double> sample = X[i];
+		double label = y[i];
+
+		double split_value = X[i][split_idx];
+
+		// Ignore values that are negative for example after removing them from the matrix
+		sample[split_idx] = -1.0;
+
+		if (split_value <= split_thresh) {
+			X_left.push_back(sample);
+			y_left.push_back(label);
+		}
+		else {
+			X_right.push_back(sample);
+			y_right.push_back(label);
+		}
+	}
+
+	// csdfsf
+	bool isLeftOrRightEmpty = y_left.size() == 0 || y_right.size() == 0; 
+
+	if (isLeftOrRightEmpty) {
+		return new Node(0, 0.0, nullptr, nullptr, mean(y));
+	}
 
 	Node* left;
 	Node* right;
+
+	if (depth == max_depth - 1 || y_left.size() < min_samples_split) {
+		left = new Node(0, 0.0, nullptr, nullptr, mean(y_left));
+	}
+	else {
+		left = growTree(X_left, y_left, depth + 1);
+	}
+
+	if (depth == max_depth - 1 || y_right.size() < min_samples_split) {
+		right = new Node(0, 0.0, nullptr, nullptr, mean(y_right));
+	}
+	else {
+		right = growTree(X_right, y_right, depth + 1);
+	}
+
+	// Recursively grow the left and right subtrees
+
 	return new Node(split_idx, split_thresh, left, right); // return a new node with the split index, split threshold, left tree, and right tree
 }
 
@@ -132,15 +224,22 @@ double DecisionTreeRegression::mean(std::vector<double>& values) {
 
 // traverseTree function: Traverses the decision tree and returns the predicted value for the given input vector.//
 double DecisionTreeRegression::traverseTree(std::vector<double>& x, Node* node) {
-
 	/* Implement the following:
 		--- If the node is a leaf node, return its value
 		--- If the feature value of the input vector is less than or equal to the node's threshold, traverse the left subtree
 		--- Otherwise, traverse the right subtree
 	*/
-	// TODO
 
-	return 0.0;
+	if (node->isLeafNode())
+		return node->value;
+
+	int feature_index = node->feature;
+	double threshold = node->threshold;
+
+	if (x[feature_index] <= threshold)
+		return traverseTree(x, node->left);
+	else
+		return traverseTree(x, node->right);
 }
 
 
