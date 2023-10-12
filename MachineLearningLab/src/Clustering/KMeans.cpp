@@ -23,13 +23,20 @@ using namespace System::Windows::Forms; // For MessageBox
 
 // KMeans function: Constructor for KMeans class.//
 KMeans::KMeans(int numClusters, int maxIterations)
-	: numClusters_(numClusters), maxIterations_(maxIterations) {}
+	: numClusters_(numClusters), maxIterations_(maxIterations) {
+	srand((unsigned)time(NULL));
+}
 
 
 // fit function: Performs K-means clustering on the given dataset and return the centroids of the clusters.//
 void KMeans::fit(const std::vector<std::vector<double>>& data) {
 	// Create a copy of the data to preserve the original dataset
-	std::vector<std::vector<double>> normalizedData = data;
+	//std::vector<std::vector<double>> normalizedData = data;
+	int num_samples = data.size();
+	int num_features = data[0].size();
+
+	std::vector<int> previousLabels(num_samples, -1); 
+	std::vector<int> currentLabels(num_samples, -1);
 
 	/* Implement the following:
 		---	Initialize centroids randomly
@@ -41,8 +48,35 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 		--- Update centroids
 		---  Check for convergence
 	*/
-	
-	// TODO
+
+	// Randomly assign centroid positions
+
+	std::vector<double> maxValues = (num_features, 0.0);
+
+	for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
+		for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
+			double value = data[sample_idx][feature_idx];
+			double maxValue = maxValues[feature_idx];
+
+			if (value > maxValue) {
+				maxValues[feature_idx] = value;
+			}
+		}
+	}
+
+	for (int i = 0; i < numClusters_; ++i) {
+		std::vector<double> centroid;
+
+		for (int j = 0; j < num_features; ++j) {
+			double randValue = fmod(rand(), maxValues[j]);
+
+			centroid.push_back(randValue);
+		}
+
+		centroids_.push_back(centroid);
+	}
+
+	// Start with checking for the closests centroid for each data point and adjust position of the centroid
 }
 
 
@@ -50,17 +84,31 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 std::vector<int> KMeans::predict(const std::vector<std::vector<double>>& data) const {
 	std::vector<int> labels;
 	labels.reserve(data.size());
-	
+
 	/* Implement the following:
 		--- Initialize the closest centroid and minimum distance to the maximum possible value
 		--- Iterate through each centroid
 		--- Calculate the Euclidean distance between the point and the centroid
 		--- Add the closest centroid to the labels vector
-    */
+	*/
 	
-	// TODO
-	return labels; // Return the labels vector
+	for (auto instance : data) {
+		double best_distance = std::numeric_limits<double>::infinity();
+		int centroid_idx = -1;
 
+		for (int i = 0; i < centroids_.size(); ++i) {
+			double distance = SimilarityFunctions::euclideanDistance(instance, centroids_[i]);
+
+			if (distance < best_distance) {
+				best_distance = distance;
+				centroid_idx = i;
+			}
+		}
+
+		labels.push_back(centroid_idx);
+	}
+	
+	return labels; // Return the labels vector
 }
 
 
