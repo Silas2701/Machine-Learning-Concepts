@@ -76,10 +76,13 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
 
 }
 
+
+
+
 // ------ GRADIENT DESCENT ------
 
 // Function to fit the linear regression model to the training data using Gradient Descent
-void fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learningRate, int num_epochs) {
+void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learningRate, int num_epochs) {
     // Check if the sizes of trainData and trainLabels match
     if (trainData.size() != trainLabels.size()) {
         std::cerr << "Error: Size mismatch between trainData and trainLabels." << std::endl;
@@ -106,7 +109,18 @@ void fit(const std::vector<std::vector<double>>& trainData, const std::vector<do
     // Gradient Descent
     for (int iter = 0; iter < num_epochs; ++iter) {
         // Compute predictions
-       // Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + coefficients(0);
+       //Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + coefficients(0);
+//        Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + Eigen::VectorXd::Map(&coefficients(0), 1);
+        Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1);
+        Eigen::VectorXd dffd = Eigen::VectorXd::Map(&coefficients(0), 1);
+        auto result = predictions + dffd;
+       // Eigen::VectorXd predictions = coefficients(0) * X + coefficients.tail(coefficients.size() - 1);
+
+
+
+       
+
+
 
         // Compute the error (cost) and its gradient
         Eigen::VectorXd error = predictions - y;
@@ -238,8 +252,8 @@ std::tuple<double, double, double, double, double, double,
         DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
         // Fit the model to the training data 
-        fit(trainData, trainLabels);
-
+        //fit(trainData, trainLabels); // Matrice computation
+       fit(trainData, trainLabels,0.01,100); // Gradient descent 
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);

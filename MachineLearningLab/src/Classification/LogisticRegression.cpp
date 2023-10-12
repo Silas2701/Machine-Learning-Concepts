@@ -48,6 +48,7 @@ void LogisticRegression::fit(const std::vector<std::vector<double>>& X_train, co
         // Create a binary label vector for the current class
         std::vector<double> binary_labels;
         for (int i = 0; i < num_samples; ++i) {
+            // compare if its the right class
             binary_labels.push_back(y_train[i] == c ? 1.0 : 0.0);
         }
 
@@ -62,6 +63,7 @@ void LogisticRegression::fit(const std::vector<std::vector<double>>& X_train, co
                     // Calculate the weighted sum of features
                 double weighted_sum = 0.0;
                 for (int j = 0; j < num_features; ++j) {
+                    // multiply each feature with its weight
                     weighted_sum += weights[c][j] * x_i[j];
                 }
 
@@ -73,7 +75,7 @@ void LogisticRegression::fit(const std::vector<std::vector<double>>& X_train, co
                 double error = sigmoid - binary_labels[i];
 
                 for (int j = 0; j < num_features; ++j) {
-                    //Update weights using gradient descent
+                    //Update weights using gradient descent 
                     weights[c][j] -= learning_rate * error * x_i[j];
                 }
             }
