@@ -114,8 +114,8 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 
 		double split_value = X[i][split_idx];
 
-		// Ignore values that are negative for example after removing them from the matrix
-		sample[split_idx] = -1.0;
+		// Ignore values that are infinity for example after removing them from the matrix
+		sample[split_idx] = std::numeric_limits<double>::infinity();
 
 		if (split_value <= split_thresh) {
 			X_left.push_back(sample);
@@ -162,6 +162,8 @@ double DecisionTreeRegression::meanSquaredError(std::vector<double>& y, std::vec
 
 	double mse = 0.0;
 
+	double totalNumber = static_cast<double>(X_column.size());
+
 	std::vector<double> y_left;
 	std::vector<double> y_right;
 
@@ -187,7 +189,7 @@ double DecisionTreeRegression::meanSquaredError(std::vector<double>& y, std::vec
 	double mseLeft = 0.0;
 
 	if (countLeft != 0)
-		mseLeft = squaredLeft / countLeft;
+		mseLeft = (countLeft / totalNumber) * squaredLeft;
 
 	double meanRight = mean(y_right);
 	double countRight = static_cast<double>(y_right.size());
@@ -200,7 +202,7 @@ double DecisionTreeRegression::meanSquaredError(std::vector<double>& y, std::vec
 	double mseRight = 0.0;
 
 	if (countRight != 0)
-		mseRight = squaredRight / countRight;
+		mseRight = (countRight / totalNumber) * squaredRight;
 
 	mse = mseLeft + mseRight;
 	
