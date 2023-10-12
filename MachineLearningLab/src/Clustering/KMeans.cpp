@@ -77,6 +77,21 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 	}
 
 	// Start with checking for the closests centroid for each data point and adjust position of the centroid
+
+	int iterations = 0;
+	bool clusterChanged = true;
+
+	while (iterations < maxIterations_ && clusterChanged) {
+		
+		for (int centroid_idx = 0; centroid_idx < centroids_.size(); ++centroid_idx) {
+			for (int sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
+				data[sample_idx];
+			}
+		}
+
+		++iterations;
+		clusterChanged = (previousLabels != currentLabels);
+	}
 }
 
 
