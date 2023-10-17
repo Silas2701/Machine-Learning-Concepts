@@ -115,10 +115,8 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 			}
 
 			if (closestCentroid != -1) {
-				auto it = currentLabels.find(closestCentroid);
-
-				// Safe index of the sample based by their closests centroids in a map
-				if (it == currentLabels.end()) {
+				// Group sample index by their closest centroids and add to map
+				if (currentLabels.find(closestCentroid) == currentLabels.end()) {
 					currentLabels[closestCentroid] = std::vector<int> { sample_idx };
 				} else {
 					currentLabels[closestCentroid].push_back(sample_idx);
@@ -126,14 +124,19 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 			}
 		}
 
-		// Recalculate the clusters center by estimating new cluster centers
+		// Recalculate the cluster centers by estimating new cluster centers
 		for (const auto& label : currentLabels) {
 			int centroid_idx = label.first;
 			std::vector<int> samplesClosestToCentroid = label.second;
+
+			// Count the number of samples
 			int sampleCount = samplesClosestToCentroid.size();
 
+			// Create a new empty centroid
 			std::vector<double> centroid(num_features, 0.0);
 
+			// Sum up all the features of the samples which are closest to the centroid 
+			// and devide it by the number of samples at the end to get the mean value
 			for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
 				for (const int sample_idx : samplesClosestToCentroid) {
 					centroid[feature_idx] += data[sample_idx][feature_idx];
@@ -142,6 +145,7 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 				centroid[feature_idx] /= static_cast<double>(sampleCount);
 			}
 
+			// Update the centroid
 			centroids_[centroid_idx] = centroid;
 		}
 
@@ -164,10 +168,12 @@ std::vector<int> KMeans::predict(const std::vector<std::vector<double>>& data) c
 		--- Add the closest centroid to the labels vector
 	*/
 	
+	// Iterate over all test samples
 	for (auto instance : data) {
 		double best_distance = std::numeric_limits<double>::infinity();
 		int centroid_idx = -1;
 
+		// Find the centroid which is closest to the data point by calculating the euclidean distance between the centroid and the sample
 		for (int i = 0; i < centroids_.size(); ++i) {
 			double distance = SimilarityFunctions::euclideanDistance(instance, centroids_[i]);
 
@@ -177,6 +183,7 @@ std::vector<int> KMeans::predict(const std::vector<std::vector<double>>& data) c
 			}
 		}
 
+		// Push the closest centroid to the label set
 		labels.push_back(centroid_idx);
 	}
 	
