@@ -35,8 +35,8 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 	int num_samples = data.size();
 	int num_features = data[0].size();
 
-	std::vector<int> previousLabels(num_samples, -1); 
-	std::vector<int> currentLabels(num_samples, -1);
+	std::map<int, std::vector<int>> previousLabels; 
+	std::map<int, std::vector<int>> currentLabels;
 
 	/* Implement the following:
 		---	Initialize centroids randomly
@@ -49,9 +49,8 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 		---  Check for convergence
 	*/
 
-	// Randomly assign centroid positions
-
-	std::vector<double> maxValues = (num_features, 0.0);
+	// For every feature find the max value
+	std::vector<double> maxValues(num_features, 0.0);
 
 	for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
 		for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
@@ -64,6 +63,8 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 		}
 	}
 
+	// Create centroids/seed points to start from by picking a random value for every feature of the centroid 
+	// which lies between 0 and the max possible value of the feature for the training data
 	for (int i = 0; i < numClusters_; ++i) {
 		std::vector<double> centroid;
 
@@ -81,14 +82,70 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 	int iterations = 0;
 	bool clusterChanged = true;
 
+	// Stop criteria: Iterate n times or cluster did not change anymore to the previous one
 	while (iterations < maxIterations_ && clusterChanged) {
-		
-		for (int centroid_idx = 0; centroid_idx < centroids_.size(); ++centroid_idx) {
-			for (int sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
-				data[sample_idx];
+		// After having compared all labels from the current iteration with the labels from the previous iteration,
+		// copy all labels from currentLabels to previousLabels because we start a new iteration
+		// and we want to compare the labels from the upcoming iteration with the labels from the previous iteration then
+		previousLabels.clear();
+		previousLabels.insert(currentLabels.begin(), currentLabels.end());
+
+		// Clear current labels as it will be filled again by new data
+		currentLabels.clear();
+
+		// Iterate over all the samples
+		for (int sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
+			std::vector<double> sample = data[sample_idx];
+
+			int closestCentroid = -1;
+			double closestDistance = std::numeric_limits<double>::infinity();
+
+			// Iterate over all centroids and check for all the centroids which one is the closest
+			for (int centroid_idx = 0; centroid_idx < centroids_.size(); ++centroid_idx) {
+				std::vector<double> centroid = centroids_[centroid_idx];
+
+				// Calculate euclidean distance between the sample and the centroid
+				double distance = SimilarityFunctions::euclideanDistance(sample, centroid);
+
+				// Update the cluster id to which the sample belongs to by checking which cluster is the closest
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestCentroid = centroid_idx;
+				}
+			}
+
+			if (closestCentroid != -1) {
+				auto it = currentLabels.find(closestCentroid);
+
+				// Safe index of the sample based by their closests centroids in a map
+				if (it == currentLabels.end()) {
+					currentLabels[closestCentroid] = std::vector<int> { sample_idx };
+				} else {
+					currentLabels[closestCentroid].push_back(sample_idx);
+				}
 			}
 		}
 
+		// Recalculate the clusters center by estimating new cluster centers
+		for (const auto& label : currentLabels) {
+			int centroid_idx = label.first;
+			std::vector<int> samplesClosestToCentroid = label.second;
+			int sampleCount = samplesClosestToCentroid.size();
+
+			std::vector<double> centroid(num_features, 0.0);
+
+			for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
+				for (const int sample_idx : samplesClosestToCentroid) {
+					centroid[feature_idx] += data[sample_idx][feature_idx];
+				}
+
+				centroid[feature_idx] /= static_cast<double>(sampleCount);
+			}
+
+			centroids_[centroid_idx] = centroid;
+		}
+
+		// Increment the count of iterations by one and compare the previous label set with the current label set
 		++iterations;
 		clusterChanged = (previousLabels != currentLabels);
 	}
