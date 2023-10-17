@@ -30,17 +30,6 @@ DecisionTreeClassification::DecisionTreeClassification(int min_samples_split, in
 void DecisionTreeClassification::fit(std::vector<std::vector<double>>& X, std::vector<double>& y) {
 	n_feats = (n_feats == 0) ? X[0].size() : min(n_feats, static_cast<int>(X[0].size()) - 1);
 
-	int number_total_features = static_cast<int>(X[0].size());
-	int features_to_remove = number_total_features - n_feats;
-
-	for (int i = 0; i < features_to_remove; ++i) {
-		int random = rand() % static_cast<int>(X[0].size());
-
-		for (int feature_idx = 0; feature_idx < X.size(); ++feature_idx) {
-			X[feature_idx].erase(X[feature_idx].begin() + random);
-		}
-	}
-
 	root = growTree(X, y);
 }
 

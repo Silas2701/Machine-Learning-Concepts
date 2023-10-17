@@ -22,21 +22,13 @@ using namespace System::Windows::Forms; // For MessageBox
 DecisionTreeRegression::DecisionTreeRegression(int min_samples_split, int max_depth, int n_feats)
 	: min_samples_split(min_samples_split), max_depth(max_depth), n_feats(n_feats), root(nullptr)
 {
+
 }
 
 
 // fit function:Fits a decision tree regression model to the given data.//
 void DecisionTreeRegression::fit(std::vector<std::vector<double>>& X, std::vector<double>& y) {
 	n_feats = (n_feats == 0) ? X[0].size() : min(n_feats, static_cast<int>(X[0].size()));
-
-	std::random_shuffle(X.begin(), X.end());
-	int numberOfFeaturesToRemove = X[0].size() - n_feats;
-
-	for (int i = 0; i < X[0].size(); ++i) {
-		for (int j = 0; j < numberOfFeaturesToRemove; ++j) {
-			X[i].pop_back();
-		}
-	}
 
 	root = growTree(X, y);
 }
@@ -67,6 +59,7 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 	int split_idx = -1;
 	double split_thresh = 0.0;
 
+	// Restructure the original Matrix X to easily access all the features in one column
 	std::vector<std::vector<double>> X_columns;
 
 	for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
@@ -79,10 +72,12 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 		X_columns.push_back(X_column);
 	}
 
+	// Check every value in the feature matrix for the best split value
 	for (int feature_idx = 0; feature_idx < num_features; feature_idx++) {
 		for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
 			double candidate_threshold = X[sample_idx][feature_idx];
 
+			// Find appropriate split point by minimizing mean squared error 
 			double mean_squared_error = meanSquaredError(y, X_columns[feature_idx], candidate_threshold);
 
 			// Check if this is the best split so far
@@ -94,6 +89,7 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 		}
 	}
 
+	// Stopping criteria
 	double error = meanSquaredError(y, X_columns[split_idx], split_thresh);
 	double errorThreshold = 10;
 
@@ -117,6 +113,7 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 		// Ignore values that are infinity for example after removing them from the matrix
 		sample[split_idx] = std::numeric_limits<double>::infinity();
 
+		// If split value is smaller than the split threshold/split point put it into the left node otherwise to the right
 		if (split_value <= split_thresh) {
 			X_left.push_back(sample);
 			y_left.push_back(label);
@@ -127,16 +124,10 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 		}
 	}
 
-	// csdfsf
-	bool isLeftOrRightEmpty = y_left.size() == 0 || y_right.size() == 0; 
-
-	if (isLeftOrRightEmpty) {
-		return new Node(0, 0.0, nullptr, nullptr, mean(y));
-	}
-
 	Node* left;
 	Node* right;
 
+	// If the maximum depth is reached or the sample size is not enough, don't split and take the mean value
 	if (depth == max_depth - 1 || y_left.size() < min_samples_split) {
 		left = new Node(0, 0.0, nullptr, nullptr, mean(y_left));
 	}
@@ -144,14 +135,13 @@ Node* DecisionTreeRegression::growTree(std::vector<std::vector<double>>& X, std:
 		left = growTree(X_left, y_left, depth + 1);
 	}
 
+	// If the maximum depth is reached or the sample size is not enough, don't split and take the mean value
 	if (depth == max_depth - 1 || y_right.size() < min_samples_split) {
 		right = new Node(0, 0.0, nullptr, nullptr, mean(y_right));
 	}
 	else {
 		right = growTree(X_right, y_right, depth + 1);
 	}
-
-	// Recursively grow the left and right subtrees
 
 	return new Node(split_idx, split_thresh, left, right); // return a new node with the split index, split threshold, left tree, and right tree
 }
