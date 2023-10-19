@@ -72,7 +72,7 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
 
     // Calculate the coefficients using the least squares method
      // Store the coefficients for future predictions
-    coefficients = (X_with_intercept.transpose() * X_with_intercept).ldlt().solve(X_with_intercept.transpose() * y);
+    m_coefficients = (X_with_intercept.transpose() * X_with_intercept).ldlt().solve(X_with_intercept.transpose() * y);
 
 }
 
@@ -109,11 +109,8 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
     // Gradient Descent
     for (int iter = 0; iter < num_epochs; ++iter) {
         // Compute predictions
-       //Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + coefficients(0);
+       Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + coefficients;
 //        Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + Eigen::VectorXd::Map(&coefficients(0), 1);
-        Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1);
-        Eigen::VectorXd dffd = Eigen::VectorXd::Map(&coefficients(0), 1);
-        auto result = predictions + dffd;
        // Eigen::VectorXd predictions = coefficients(0) * X + coefficients.tail(coefficients.size() - 1);
 
 
@@ -148,11 +145,9 @@ std::vector<double> LinearRegression::predict(const std::vector<std::vector<doub
 	// TODO
 
 	std::vector<double> result;
-
-
    
     // Check if the model has been fitted
-    if (coefficients.size() == 0) {
+    if (m_coefficients.size() == 0) {
         std::cerr << "Error: Model has not been fitted. Please call the 'fit' function first." << std::endl;
         return result;
     }
@@ -171,23 +166,15 @@ std::vector<double> LinearRegression::predict(const std::vector<std::vector<doub
 	
 
     // Make predictions using the stored coefficients
-    Eigen::VectorXd predictions = X_with_intercept * coefficients;
+    Eigen::VectorXd predictions = X_with_intercept * m_coefficients;
 
 
     // Convert predictions to a vector
     for (int i = 0; i < predictions.size(); ++i) {
         result.push_back(predictions(i));
     }
-    
-
-
 
     return result;
-
-
-
-    
-
 }
 
 
@@ -252,8 +239,8 @@ std::tuple<double, double, double, double, double, double,
         DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
         // Fit the model to the training data 
-        //fit(trainData, trainLabels); // Matrice computation
-       fit(trainData, trainLabels,0.01,100); // Gradient descent 
+        fit(trainData, trainLabels); // Matrice computation
+        // fit(trainData, trainLabels,0.01,100); // Gradient descent 
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);
