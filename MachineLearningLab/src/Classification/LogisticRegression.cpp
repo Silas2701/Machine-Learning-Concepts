@@ -44,7 +44,12 @@ void LogisticRegression::fit(const std::vector<std::vector<double>>& X_train, co
     // TODO
     // Initialize weights for each class
     std::vector<std::vector<double>> weights(num_classes, std::vector<double>(num_features, 0.0));
-    for (int c = 0; c < num_classes; ++c) {
+
+    for (int c_idx = 0; c_idx < num_classes; ++c_idx) {
+        // The actual class (in the range 1 to 3)
+        int c = c_idx + 1;
+        double bias = 0.0;
+
         // Create a binary label vector for the current class
         std::vector<double> binary_labels;
         for (int i = 0; i < num_samples; ++i) {
@@ -62,7 +67,7 @@ void LogisticRegression::fit(const std::vector<std::vector<double>>& X_train, co
                     // Calculate the weighted sum of features
                 double weighted_sum = 0.0;
                 for (int j = 0; j < num_features; ++j) {
-                    weighted_sum += weights[c][j] * x_i[j];
+                    weighted_sum += weights[c_idx][j] * x_i[j];
                 }
 
                 // Calculate the sigmoid of the weighted sum
@@ -74,7 +79,7 @@ void LogisticRegression::fit(const std::vector<std::vector<double>>& X_train, co
 
                 for (int j = 0; j < num_features; ++j) {
                     //Update weights using gradient descent
-                    weights[c][j] -= learning_rate * error * x_i[j];
+                    weights[c_idx][j] -= learning_rate * error * x_i[j];
                 }
             }
         }
@@ -117,14 +122,16 @@ std::vector<double> LogisticRegression::predict(const std::vector<std::vector<do
 
         // Predict class label with the highest score
         double max_score = scores[0];
-        double predicted_class = 0;
-        for (int c = 1; c < scores.size(); ++c) {
-            if (scores[c] > max_score) {
+        double best_c_idx = 0;
+        for (int c_idx = 0; c_idx < scores.size(); ++c_idx) {
+            if (scores[c_idx] > max_score) {
                 //Predict class label with the highest score
-                max_score = scores[c];
-                predicted_class = c;
+                max_score = scores[c_idx];
+                best_c_idx = c_idx;
             }
         }
+
+        int predicted_class = best_c_idx + 1;
 
         predictions.push_back(predicted_class);
     }
