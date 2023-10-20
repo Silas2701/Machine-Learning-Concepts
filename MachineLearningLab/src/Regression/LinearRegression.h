@@ -18,7 +18,7 @@ public:
     // Matrice computation
     void fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels);
     // Gradient descent 
-    void fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learningRate, int num_epochs);
+    void fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learning_rate, int num_epochs);
     std::vector<double> predict(const std::vector<std::vector<double>>& testData);
     std::tuple<double, double, double, double, double, double,
         std::vector<double>, std::vector<double>,

@@ -82,9 +82,9 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
 // ------ GRADIENT DESCENT ------
 
 // Function to fit the linear regression model to the training data using Gradient Descent
-void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learningRate, int num_epochs) {
+void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learning_rate, int num_epochs) {
     // Check if the sizes of trainData and trainLabels match
-    if (trainData.size() != trainLabels.size()) {
+    /*if (trainData.size() != trainLabels.size()) {
         std::cerr << "Error: Size mismatch between trainData and trainLabels." << std::endl;
         return;
     }
@@ -124,8 +124,52 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
         Eigen::VectorXd gradient = X.transpose() * error;
 
         // Update coefficients using the gradient and learning rate
-        coefficients -= learningRate * gradient;
+        coefficients -= learning_rate * gradient;
+    }*/
+    int num_features = trainData[0].size();
+    int num_samples = trainData.size();
+
+    // Initialize weights with zeros
+    std::vector<double> weights = std::vector<double>(num_features, 0.0);
+    double bias = 0.0;
+
+    for (int epoch = 0; epoch < num_epochs; epoch++) {
+        double weight_gradient = 0.0;
+        double bias_gradient = 0.0;
+
+        for (int i = 0; i < num_samples; i++) {
+            std::vector<double> x = trainData[i];
+            double y = trainLabels[i];
+
+            double weighted_sum = 0.0;
+            for (int j = 0; j < x.size(); j++) {
+                weighted_sum += weights[j] * x[j];
+            }
+
+            double predicted = weighted_sum + bias;
+
+            // Calculate the gradients
+            for (int j = 0; j < num_features; j++) {
+                weight_gradient += (predicted - y) * x[j];
+            }
+            bias_gradient += (predicted - y);
+        }
+
+        // Update the weights and bias
+        for (int j = 0; j < num_features; j++) {
+            weights[j] -= learning_rate * weight_gradient / num_samples;
+        }
+
+        bias -= learning_rate * bias_gradient / num_samples;
     }
+
+    Eigen::VectorXd coefficients = Eigen::VectorXd::Zero(trainData[0].size() + 1);
+
+    for (int i = 0; i < weights.size(); ++i) {
+        coefficients(i + 1) = weights[i];
+    }
+
+    m_coefficients = coefficients;
 }
 
 
@@ -239,8 +283,8 @@ std::tuple<double, double, double, double, double, double,
         DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
         // Fit the model to the training data 
-        fit(trainData, trainLabels); // Matrice computation
-        // fit(trainData, trainLabels,0.01,100); // Gradient descent 
+        //fit(trainData, trainLabels); // Matrice computation
+        fit(trainData, trainLabels,0.001,100); // Gradient descent 
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);
