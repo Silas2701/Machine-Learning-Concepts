@@ -238,8 +238,8 @@ std::tuple<double, double, double, double, double, double,
         DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
         // Fit the model to the training data 
-        //fit(trainData, trainLabels); // Matrice computation
-        fit(trainData, trainLabels,0.000005,100); // Gradient descent 
+        fit(trainData, trainLabels); // Matrice computation
+        //fit(trainData, trainLabels,0.000005,100); // Gradient descent 
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);
