@@ -83,86 +83,41 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
 
 // Function to fit the linear regression model to the training data using Gradient Descent
 void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learning_rate, int num_epochs) {
-    // Check if the sizes of trainData and trainLabels match
-    /*if (trainData.size() != trainLabels.size()) {
-        std::cerr << "Error: Size mismatch between trainData and trainLabels." << std::endl;
-        return;
-    }
-
-    // Convert trainData to matrix representation
-    Eigen::MatrixXd X(trainData.size(), trainData[0].size());
-    for (int i = 0; i < trainData.size(); ++i) {
-        for (int j = 0; j < trainData[0].size(); ++j) {
-            X(i, j) = trainData[i][j];
-        }
-    }
-
-    // Convert trainLabels to matrix representation
-    Eigen::VectorXd y(trainLabels.size());
-    for (int i = 0; i < trainLabels.size(); ++i) {
-        y(i) = trainLabels[i];
-    }
-
-    // Initialize coefficients to zeros
-    coefficients = Eigen::VectorXd::Zero(trainData[0].size() + 1);
-
-    // Gradient Descent
-    for (int iter = 0; iter < num_epochs; ++iter) {
-        // Compute predictions
-       Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + coefficients;
-//        Eigen::VectorXd predictions = X * coefficients.tail(coefficients.size() - 1) + Eigen::VectorXd::Map(&coefficients(0), 1);
-       // Eigen::VectorXd predictions = coefficients(0) * X + coefficients.tail(coefficients.size() - 1);
-
-
-
-       
-
-
-
-        // Compute the error (cost) and its gradient
-        Eigen::VectorXd error = predictions - y;
-        Eigen::VectorXd gradient = X.transpose() * error;
-
-        // Update coefficients using the gradient and learning rate
-        coefficients -= learning_rate * gradient;
-    }*/
     int num_features = trainData[0].size();
     int num_samples = trainData.size();
 
     // Initialize weights with zeros
     std::vector<double> weights = std::vector<double>(num_features, 0.0);
-    double bias = 0.0;
 
+    // Iterate over the epochs
     for (int epoch = 0; epoch < num_epochs; epoch++) {
-        double weight_gradient = 0.0;
-        double bias_gradient = 0.0;
+        // Initialize an empty weight gradients vector holding the current gradient descent change
+        std::vector<double> weight_gradients = std::vector<double>(num_features, 0.0);
 
-        for (int i = 0; i < num_samples; i++) {
-            std::vector<double> x = trainData[i];
-            double y = trainLabels[i];
+        // Iterate over all the features one by one
+        for (int i = 0; i < num_features; i++) {
+            // Iterate over all samples
+            for (int j = 0; j < num_samples; j++) {
+                // Fetch one sample and the appropriate sample
+                std::vector<double> x = trainData[j];
+                double y = trainLabels[j];
 
-            double weighted_sum = 0.0;
-            for (int j = 0; j < x.size(); j++) {
-                weighted_sum += weights[j] * x[j];
+                // Calculate the predicted value by summing up all the features multiplied by their weight
+                double predicted = 0.0;
+                for (int k = 0; k < x.size(); k++) {
+                    predicted += weights[k] * x[k];
+                }
+
+                // Sum up difference between the predicted value and the label and multiply it with the feature value
+                weight_gradients[i] += (predicted - y) * x[i];
             }
 
-            double predicted = weighted_sum + bias;
-
-            // Calculate the gradients
-            for (int j = 0; j < num_features; j++) {
-                weight_gradient += (predicted - y) * x[j];
-            }
-            bias_gradient += (predicted - y);
+            // Calculate the new weight by subtracting the gradient difference
+            weights[i] -= learning_rate * weight_gradients[i] / num_samples;
         }
-
-        // Update the weights and bias
-        for (int j = 0; j < num_features; j++) {
-            weights[j] -= learning_rate * weight_gradient / num_samples;
-        }
-
-        bias -= learning_rate * bias_gradient / num_samples;
     }
 
+    // Create an Eigen Vector for the weights
     Eigen::VectorXd coefficients = Eigen::VectorXd::Zero(trainData[0].size() + 1);
 
     for (int i = 0; i < weights.size(); ++i) {
@@ -284,7 +239,7 @@ std::tuple<double, double, double, double, double, double,
 
         // Fit the model to the training data 
         //fit(trainData, trainLabels); // Matrice computation
-        fit(trainData, trainLabels,0.001,100); // Gradient descent 
+        fit(trainData, trainLabels,0.000005,100); // Gradient descent 
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);
