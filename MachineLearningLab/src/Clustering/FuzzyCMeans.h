@@ -30,6 +30,7 @@ private:
     void initializeMembershipMatrix(int numDataPoints);
     void updateMembershipMatrix(const std::vector<std::vector<double>>& data, const std::vector<std::vector<double>> centroids_);
     std::vector<std::vector<double>> updateCentroids(const std::vector<std::vector<double>>& data);
+    void initializeCentroids(const std::vector<std::vector<double>>& data);
 
 };
 
