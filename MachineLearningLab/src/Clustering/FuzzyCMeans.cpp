@@ -82,11 +82,10 @@ void FuzzyCMeans::initializeMembershipMatrix(int numDataPoints) {
 		---	Normalize membership values to sum up to 1 for each data point
 	*/
 
-	// TODO
-
 	std::random_device rd;
 	std::mt19937 gen(rd());
 
+	// Apply random values to each entry of the membership matrix
 	for (int i = 0; i < numDataPoints; i++) {
 		double total = 0.0;
 		for (int j = 0; j < numClusters_; j++) {
@@ -94,6 +93,8 @@ void FuzzyCMeans::initializeMembershipMatrix(int numDataPoints) {
 			membershipMatrix_[i][j] = dis(gen);
 			total += membershipMatrix_[i][j];
 		}
+
+		// Normalize columns of each cluster so that the sum of all clusters for each data point is 1
 		for (int j = 0; j < numClusters_; j++) {
 			membershipMatrix_[i][j] /= total;
 		}
@@ -111,7 +112,7 @@ void FuzzyCMeans::updateMembershipMatrix(const std::vector<std::vector<double>>&
 		--- Normalize membership values to sum up to 1 for each data point
 	*/
 
-	// TODO
+	// Apply the formula for finding the centroid of a cluster
 	for (int i = 0; i < data.size(); i++) {
 		for (int j = 0; j < numClusters_; j++) {
 			double distanceToCentroid = SimilarityFunctions::euclideanDistance(data[i], centroids_[j]);
@@ -136,11 +137,10 @@ std::vector<std::vector<double>> FuzzyCMeans::updateCentroids(const std::vector<
 		--- Calculate the membership of the data point to the cluster raised to the fuzziness
 	*/
 
-	// TODO
-
 	std::vector<std::vector<double>> newCentroids(numClusters_, std::vector<double>(data[0].size(), 0.0));
 	std::vector<double> membershipSum(numClusters_, 0.0);
 
+	// Iterate over the membership matrix and multiply each membershipPower (squared membership) with the respective data point feature
 	for (int i = 0; i < data.size(); i++) {
 		for (int j = 0; j < numClusters_; j++) {
 			double membershipPower = std::pow(membershipMatrix_[i][j], fuzziness_);
@@ -151,6 +151,7 @@ std::vector<std::vector<double>> FuzzyCMeans::updateCentroids(const std::vector<
 		}
 	}
 
+	// Normalize each centroid feature value by dividing by the total membership sum of the cluster
 	for (int j = 0; j < numClusters_; j++) {
 		for (int k = 0; k < data[0].size(); k++) {
 			newCentroids[j][k] /= membershipSum[j];
@@ -174,7 +175,7 @@ std::vector<int> FuzzyCMeans::predict(const std::vector<std::vector<double>>& da
 		--- Add the label of the closest centroid to the labels vector
 	*/
 
-	//TODO
+	// Iterate over all data points and choose the best cluster (max membership value) for each sample
 	for (int i = 0; i < data.size(); i++) {
 		double maxMembership = 0.0;
 		int bestCluster = 0;
