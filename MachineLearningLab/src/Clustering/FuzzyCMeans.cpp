@@ -29,7 +29,29 @@ FuzzyCMeans::FuzzyCMeans(int numClusters, int maxIterations, double fuzziness)
 // fit function: Performs Fuzzy C-Means clustering on the given dataset and return the centroids of the clusters.//
 void FuzzyCMeans::fit(const std::vector<std::vector<double>>& data) {
 	// Create a copy of the data to preserve the original dataset
-	std::vector<std::vector<double>> normalizedData = data;
+	std::vector<std::vector<double>> normalizedData(data.size(), std::vector<double>(data[0].size()));
+
+	std::vector<double> minVal(data[0].size());
+	std::vector<double> maxVal(data[0].size());
+
+	// Find min and max values
+	for (size_t i = 0; i < data.size(); i++) {
+		for (size_t j = 0; j < data[i].size(); j++) {
+			if (data[i][j] < minVal[j]) {
+				minVal[j] = data[i][j];
+			}
+			if (data[i][j] > maxVal[j]) {
+				maxVal[j] = data[i][j];
+			}
+		}
+	}
+
+	// Normalize the vector
+	for (size_t i = 0; i < data.size(); i++) {
+		for (size_t j = 0; j < data[i].size(); j++) {
+			normalizedData[i][j] = (data[i][j] - minVal[j]) / (maxVal[j] - minVal[j]);
+		}
+	}
 
 	/* Implement the following:
 		--- Initialize centroids randomly
@@ -185,7 +207,7 @@ std::vector<int> FuzzyCMeans::predict(const std::vector<std::vector<double>>& da
 
 			if (membership > maxMembership) {
 				maxMembership = membership;
-				bestCluster = j;
+				bestCluster = j + 1;
 			}
 		}
 

@@ -1279,7 +1279,7 @@ private: System::Windows::Forms::TableLayoutPanel^ tableLayoutPanel1;
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->AutoScroll = true;
-			this->ClientSize = System::Drawing::Size(1924, 1055);
+			this->ClientSize = System::Drawing::Size(1945, 1076);
 			this->Controls->Add(this->mainTabControl);
 			this->Margin = System::Windows::Forms::Padding(3, 2, 3, 2);
 			this->Name = L"MainForm";
