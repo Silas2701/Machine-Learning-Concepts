@@ -31,29 +31,7 @@ KMeans::KMeans(int numClusters, int maxIterations)
 // fit function: Performs K-means clustering on the given dataset and return the centroids of the clusters.//
 void KMeans::fit(const std::vector<std::vector<double>>& data) {
 	// Create a copy of the data to preserve the original dataset
-	std::vector<std::vector<double>> normalizedData(data.size(), std::vector<double>(data[0].size()));
-
-	std::vector<double> minVal(data[0].size());
-	std::vector<double> maxVal(data[0].size());
-
-	// Find min and max values
-	for (size_t i = 0; i < data.size(); i++) {
-		for (size_t j = 0; j < data[i].size(); j++) {
-			if (data[i][j] < minVal[j]) {
-				minVal[j] = data[i][j];
-			}
-			if (data[i][j] > maxVal[j]) {
-				maxVal[j] = data[i][j];
-			}
-		}
-	}
-
-	// Normalize the vector
-	for (size_t i = 0; i < data.size(); i++) {
-		for (size_t j = 0; j < data[i].size(); j++) {
-			normalizedData[i][j] = (data[i][j] - minVal[j]) / (maxVal[j] - minVal[j]);
-		}
-	}
+	std::vector<std::vector<double>> normalizedData = data;
 
 	int num_samples = data.size();
 	int num_features = data[0].size();
@@ -74,14 +52,18 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 
 	// For every feature find the max value
 	std::vector<double> maxValues(num_features, 0.0);
+	std::vector<double> minValues(num_features, 0.0);
 
 	for (int sample_idx = 0; sample_idx < num_samples; sample_idx++) {
 		for (int feature_idx = 0; feature_idx < num_features; ++feature_idx) {
 			double value = data[sample_idx][feature_idx];
-			double maxValue = maxValues[feature_idx];
 
-			if (value > maxValue) {
+			if (value > maxValues[feature_idx]) {
 				maxValues[feature_idx] = value;
+			}
+
+			if (value < minValues[feature_idx]) {
+				minValues[feature_idx] = value;
 			}
 		}
 	}
@@ -92,7 +74,8 @@ void KMeans::fit(const std::vector<std::vector<double>>& data) {
 		std::vector<double> centroid;
 
 		for (int j = 0; j < num_features; ++j) {
-			double randValue = fmod(rand(), maxValues[j]);
+			double range = maxValues[j] - minValues[j];
+			double randValue = fmod(rand(), range) + minValues[j];
 
 			centroid.push_back(randValue);
 		}
@@ -247,6 +230,8 @@ KMeans::runKMeans(const std::string& filePath) {
 		std::vector<double> trainLabels;
 		std::vector<std::vector<double>> testData;
 		std::vector<double> testLabels;
+
+		DataPreprocessor::normalizeDataset(dataset);
 
 		DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
