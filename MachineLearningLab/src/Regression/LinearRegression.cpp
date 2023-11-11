@@ -83,8 +83,11 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
 
 // Function to fit the linear regression model to the training data using Gradient Descent
 void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, const std::vector<double>& trainLabels, double learning_rate, int num_epochs) {
-    int num_features = trainData[0].size();
-    int num_samples = trainData.size();
+    // Create a copy of the data to preserve the original dataset
+    std::vector<std::vector<double>> normalizedData = trainData;
+
+    int num_features = normalizedData[0].size();
+    int num_samples = normalizedData.size();
 
     // Initialize weights with zeros
     std::vector<double> weights = std::vector<double>(num_features, 0.0);
@@ -99,7 +102,7 @@ void LinearRegression::fit(const std::vector<std::vector<double>>& trainData, co
             // Iterate over all samples
             for (int j = 0; j < num_samples; j++) {
                 // Fetch one sample and the appropriate sample
-                std::vector<double> x = trainData[j];
+                std::vector<double> x = normalizedData[j];
                 double y = trainLabels[j];
 
                 // Calculate the predicted value by summing up all the features multiplied by their weight
@@ -140,6 +143,7 @@ std::vector<double> LinearRegression::predict(const std::vector<std::vector<doub
 		--- Make predictions using the stored coefficients
 		--- Convert predictions to a vector
 	*/
+    std::vector<std::vector<double>> normalizedData = testData;
 	
 	// TODO
 
@@ -152,16 +156,16 @@ std::vector<double> LinearRegression::predict(const std::vector<std::vector<doub
     }
 
     // Convert testData to matrix representation
-    Eigen::MatrixXd X(testData.size(), testData[0].size());
-    for (int i = 0; i < testData.size(); ++i) {
-        for (int j = 0; j < testData[0].size(); ++j) {
-            X(i, j) = testData[i][j];
+    Eigen::MatrixXd X(normalizedData.size(), normalizedData[0].size());
+    for (int i = 0; i < normalizedData.size(); ++i) {
+        for (int j = 0; j < normalizedData[0].size(); ++j) {
+            X(i, j) = normalizedData[i][j];
         }
     }
 
     // Construct the design matrix X (with an additional column of ones for the intercept)
-    Eigen::MatrixXd X_with_intercept(testData.size(), testData[0].size() + 1);
-    X_with_intercept << Eigen::MatrixXd::Ones(testData.size(), 1), X;
+    Eigen::MatrixXd X_with_intercept(normalizedData.size(), normalizedData[0].size() + 1);
+    X_with_intercept << Eigen::MatrixXd::Ones(normalizedData.size(), 1), X;
 	
 
     // Make predictions using the stored coefficients
@@ -235,11 +239,14 @@ std::tuple<double, double, double, double, double, double,
         std::vector<std::vector<double>> testData;
         std::vector<double> testLabels;
 
+        // Use predefined method to normalize the dataset
+        DataPreprocessor::normalizeDataset(dataset);
+
         DataPreprocessor::splitDataset(dataset, trainRatio, trainData, trainLabels, testData, testLabels);
 
         // Fit the model to the training data 
-        fit(trainData, trainLabels); // Matrice computation
-        //fit(trainData, trainLabels,0.000005,100); // Gradient descent 
+        //fit(trainData, trainLabels); // Matrice computation
+        fit(trainData, trainLabels,0.01,100); // Gradient descent 
 
         // Make predictions on the test data
         std::vector<double> testPredictions = predict(testData);

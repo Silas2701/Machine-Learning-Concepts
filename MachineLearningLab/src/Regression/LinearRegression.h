@@ -28,7 +28,8 @@ public:
 private:
 
     Eigen::VectorXd m_coefficients; // Store the coefficients for future predictions
-
+    double minVal;
+    double maxVal;
 };
 
 #endif // LINEARREGRESSION_H
